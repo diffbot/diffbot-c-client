@@ -16,7 +16,7 @@ const char *apiNameStrings[] = { "article", "frontpage", "product", "image", "an
 const char *apiFields2[] = { "meta", "querystring", "links", "tags", "*", "url", "resolved_url", "icon", "type", "title", "text", "html", "numPages", "date", "author", "breadcrumb", "nextPage", "albumUrl", "humanLanguage" };
 
 // nested fields
-const char *articlesImagesFields[] = { "url", "pixelheight", "pixelwidth", "caption", "primary", "anchorUrl", "mime", "attrTitle", "date", "size", "displayHeight", "displayWidth", "meta", "faces", "ocr", "colors", "xpath", "attrAlt" };
+const char *articlesImagesFields[] = { "url", "pixelheight", "pixelwidth", "caption", "primary", "*", "anchorUrl", "mime", "attrTitle", "date", "size", "displayHeight", "displayWidth", "meta", "faces", "ocr", "colors", "xpath", "attrAlt" };
 const char *articlesVideosFields[] = { "url", "pixelheight", "pixelwidth", "primary" };
 const char *productsProductsFields[] = { "title", "descreption", "brand", "officePrice", "regularPrice", "saveAmount", "shippingAmount", "productId", "upc", "prefixCode", "preoductOrigin", "isbn", "sku", "mpn", "availability", "brand", "quantifyPrices", "*" };
 const char *productsMediaFields[] = { "type", "link", "height", "width", "caption", "primary", "xpath" };
@@ -33,11 +33,15 @@ unsigned int fieldsMatrix[NUMBER_OF_APIS][NUMBER_OF_FIELDS] = {
 struct Diffbot
 {
 	unsigned int fields;
+	int timeout;
 	
 	// article specific parameters
 	unsigned int images_fields;
 	unsigned int videos_fields;
-	int timeout;
+
+    // frontpage specific parameters
+	enum FRONTPAGE_FORMAT format;
+	enum BOOL all;
 
     // product specific parameters
 	unsigned int products_fields;
@@ -153,6 +157,9 @@ struct Diffbot *diffbotInit()
 	df->products_fields = 0;
 	df->media_fields = 0;
 
+	df->format = NOT_SET;
+	df->all = NOT_SET;
+
 	df->stats = NOT_SET;
 	df->mode = NOT_SET;
 
@@ -209,6 +216,16 @@ void diffbotSetMode(struct Diffbot *df, enum API mode)
 void diffbotSetStats(struct Diffbot *df, enum BOOL stats)
 {
     df->stats = stats;
+}
+
+void diffbotSetFormat(struct Diffbot *df, enum FRONTPAGE_FORMAT format)
+{
+    df->format = format;
+}
+
+void diffbotSetAll(struct Diffbot *df, enum BOOL all)
+{
+    df->all = all;
 }
 
 static size_t handleData(char *ptr, size_t size, size_t nmemb, void *userdata)
@@ -304,8 +321,10 @@ static unsigned int calcFieldsLen(struct Diffbot *df, enum API api)
             index = flag2index(CURRENT_FLAG);
 
             // check if CURRENT_FLAG is applicable for current API
-            if(!isFieldValid(api, CURRENT_FLAG))
+            if(!isFieldValid(api, CURRENT_FLAG)) {
+                CURRENT_FLAG <<= 1;
                 continue;
+            }
 
             fields_len += (strlen(apiFields2[index]) + 1);
         }
@@ -342,8 +361,10 @@ static unsigned int calcOptParamsLen(struct Diffbot *df, enum API api)
                     index = flag2index(CURRENT_FLAG);
 
                     // check if CURRENT_FLAG is applicable for current API
-                    if(!isFieldValid(api, CURRENT_FLAG))
+                    if(!isFieldValid(api, CURRENT_FLAG)) {
+                        CURRENT_FLAG <<= 1;
                         continue;
+                    }
 
                     opt_len += (strlen(apiFields2[index]) + 1);
                 }
@@ -446,8 +467,51 @@ static unsigned int calcOptParamsLen(struct Diffbot *df, enum API api)
             
             break;
         case API_FRONTPAGE:
+            // process timeout
+            opt_len += calcTimeoutLen(df, api);
+
+            // process format
+            if(df->format == FORMAT_JSON)
+                opt_len += 12; // &format=json
+
+            // process all
+            if(df->all == DF_TRUE)
+                opt_len += 4; // &all
+
             break;
         case API_IMAGE:
+            // process timeout
+            opt_len += calcTimeoutLen(df, api);
+
+            // process fields
+            if(df->fields > 0 || df->images_fields > 0)
+                opt_len += 8; // "&fields="
+
+            opt_len += calcFieldsLen(df, api);
+            
+            if(df->fields & FIELD_ALL)
+                return opt_len;
+
+            // process images
+            if(df->images_fields != 0) {
+                int skip = 0;
+                opt_len += 8; // ",images("
+                if(df->images_fields & IMAGES_FIELD_ALL) {
+                    opt_len += 2; // "*)"
+                    skip = 1;
+                }
+
+                CURRENT_FLAG = 0x00000001;
+                for(i=0; i<ARRAY_SIZE(articlesImagesFields) && !skip; ++i) {
+                    if(df->images_fields & CURRENT_FLAG) {
+                        index = flag2index(CURRENT_FLAG);
+                        opt_len += (strlen(articlesImagesFields[index]) + 1);
+                        printf("flag 0x%x; index: %d\n", CURRENT_FLAG, index);
+                    }
+                    CURRENT_FLAG <<= 1;
+                }
+            }
+
             break;
         case API_ANALYZE:
 
@@ -511,8 +575,10 @@ unsigned int buildFieldsParam(struct Diffbot *df, enum API api, char *mem)
                 index = flag2index(CURRENT_FLAG);
 
                 // check if CURRENT_FLAG is applicable for current API
-                if(!isFieldValid(api, CURRENT_FLAG))
+                if(!isFieldValid(api, CURRENT_FLAG)) {
+                    CURRENT_FLAG <<= 1;
                     continue;
+                }
 
                 memcpy(mem, apiFields2[index], strlen(apiFields2[index]));
                 mem += strlen(apiFields2[index]);
@@ -551,7 +617,7 @@ static char *buildOptParams(struct Diffbot *df, enum API api, unsigned int len)
             ptr += buildTimeoutParam(df, api, ptr);
 
             // process fields
-            if(df->fields > 0 || df->images_fields > 0 || df->images_fields > 0) {
+            if(df->fields > 0 || df->images_fields > 0 || df->videos_fields > 0) {
                 memcpy(ptr, "&fields=", 9);
                 ptr += 8;
             }
@@ -709,10 +775,70 @@ static char *buildOptParams(struct Diffbot *df, enum API api, unsigned int len)
 
             *ptr = '\0';
             break;
+
         case API_FRONTPAGE:
+            // process timeout
+            ptr += buildTimeoutParam(df, api, ptr);
+
+            // process format
+            if(df->format == FORMAT_JSON) {
+                memcpy(ptr, "&format=json", 12);
+                ptr += 12;
+            }
+
+            // process 'all'
+            if(df->all == DF_TRUE) {
+                memcpy(ptr, "&all", 4);
+                ptr += 4;
+            }
+
+            *ptr = '\0';
             break;
+
         case API_IMAGE:
+            // process timeout
+            ptr += buildTimeoutParam(df, api, ptr);
+
+            // process fields
+            if(df->fields > 0 || df->images_fields > 0) {
+                memcpy(ptr, "&fields=", 9);
+                ptr += 8;
+            }
+            ptr += buildFieldsParam(df, api, ptr);
+
+            if(df->fields & FIELD_ALL)
+                return optRequest;
+
+            // process images fields
+            if(df->images_fields != 0) {
+                int skip = 0;
+                memcpy(ptr, ",images(", 8);
+                ptr += 8;
+
+                if(df->images_fields & IMAGES_FIELD_ALL) {
+                    *ptr++ = '*';
+                    *ptr++ = ')';
+                    skip = 1;
+                }
+
+                CURRENT_FLAG = 0x00000001;
+                for(i=0; i<ARRAY_SIZE(articlesImagesFields) && !skip; ++i) {
+                    if(df->images_fields & CURRENT_FLAG) {
+                        index = flag2index(CURRENT_FLAG);
+                        memcpy(ptr, articlesImagesFields[index], strlen(articlesImagesFields[index]));
+                        ptr += strlen(articlesImagesFields[index]);
+                        *ptr++ = ',';
+                    }
+
+                    CURRENT_FLAG <<= 1;
+                }
+                // get rid of last ','
+                --ptr;
+                // end of images
+                *ptr++ = ')';
+            }
             break;
+
         case API_ANALYZE:
 
             // process mode
