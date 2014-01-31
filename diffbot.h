@@ -37,19 +37,19 @@ typedef struct json_object diffbotJasonObj;
 #define IMAGES_FIELD_CAPTION		0x0008
 #define IMAGES_FIELD_PRIMARY		0x0010
 #define IMAGES_FIELD_ALL		    0x0020
-#define IMAGES_FIELD_ANCHORURL		0x0400
-#define IMAGES_FIELD_MIME	        0x0800
-#define IMAGES_FIELD_ATTRTITLE		0x1000
-#define IMAGES_FIELD_DATE	        0x2000
-#define IMAGES_FIELD_SIZE		    0x4000
-#define IMAGES_FIELD_DISPLAYHEIGHT	0x8000
-#define IMAGES_FIELD_DISPLAYWIDTH	0x00010000
-#define IMAGES_FIELD_META		    0x00020000
-#define IMAGES_FIELD_FACES		    0x00040000
-#define IMAGES_FIELD_OCR		    0x00080000
-#define IMAGES_FIELD_COLORS		    0x00100000
-#define IMAGES_FIELD_XPATH		    0x00200000
-#define IMAGES_FIELD_ATTRALT		0x00400000
+#define IMAGES_FIELD_ANCHORURL		0x0040
+#define IMAGES_FIELD_MIME	        0x0080
+#define IMAGES_FIELD_ATTRTITLE		0x0100
+#define IMAGES_FIELD_DATE	        0x0200
+#define IMAGES_FIELD_SIZE		    0x0400
+#define IMAGES_FIELD_DISPLAYHEIGHT	0x0800
+#define IMAGES_FIELD_DISPLAYWIDTH	0x1000
+#define IMAGES_FIELD_META		    0x2000
+#define IMAGES_FIELD_FACES		    0x4000
+#define IMAGES_FIELD_OCR		    0x8000
+#define IMAGES_FIELD_COLORS		    0x0010000
+#define IMAGES_FIELD_XPATH		    0x0020000
+#define IMAGES_FIELD_ATTRALT		0x0040000
 
 #define VIDEOS_FIELD_URL		    0x0001
 #define VIDEOS_FIELD_PIXELHEIGHT	0x0002
@@ -86,6 +86,7 @@ typedef struct json_object diffbotJasonObj;
 
 enum API { API_ARTICLE, API_FRONTPAGE, API_PRODUCT, API_IMAGE, API_ANALYZE };
 enum BOOL { DF_FALSE, DF_TRUE };
+enum FRONTPAGE_FORMAT { FORMAT_XML, FORMAT_JSON };
 
 struct Diffbot *diffbotInit();
 void diffbotFinish(struct Diffbot *df);
@@ -98,6 +99,8 @@ void diffbotSetMediaFields(struct Diffbot *df, unsigned int mediaFieldsBitMask);
 void diffbotSetTimeout(struct Diffbot *df, unsigned int milisec); 
 void diffbotSetStats(struct Diffbot *df, enum BOOL stats); 
 void diffbotSetMode(struct Diffbot *df, enum API mode); 
+void diffbotSetFormat(struct Diffbot *df, enum FRONTPAGE_FORMAT format); 
+void diffbotSetAll(struct Diffbot *df, enum BOOL all); 
 int diffbotSetAuth(struct Diffbot *df, char *user, char *passwd); 
 
 void diffbotJsonPrint(struct Diffbot *df, diffbotJasonObj *jobj);
