@@ -1,4 +1,3 @@
-
 # C library for the Diffbot API
 
 libdiffbot is a C library for the [Diffbot API](http://www.diffbot.com/products/automatic/). Currently it supports Article, Frontpage, Product, Image and Classifier (Analyze) APIs. 
@@ -150,3 +149,7 @@ This code will generate following query:
 For detailed available parameters consult [Product API docs](http://www.diffbot.com/products/automatic/product/).
 
 -Initial commit by Mariusz Ziulek-
+
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(66589068); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/66589068ns.gif" /></p></noscript>
