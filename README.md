@@ -75,7 +75,7 @@ When you're done uninitialize library:
 
 This code will generate following query:
 
-    http://api.diffbot.com/v2/article?token=...&url=...&timeout=7000&fields=querystring,links,tags,url,images(*),videos(pixelheight,pixelwidth,primary)
+    https://api.diffbot.com/v2/article?token=...&url=...&timeout=7000&fields=querystring,links,tags,url,images(*),videos(pixelheight,pixelwidth,primary)
 
 For detailed available parameters consult [Article API docs](http://www.diffbot.com/products/automatic/article/).
 
@@ -108,7 +108,7 @@ When you're done uninit library:
 
 This code will generate following query:
 
-    http://api.diffbot.com/v2/analyze?token=...&url=...&mode=frontpage&stats&fields=*
+    https://api.diffbot.com/v2/analyze?token=...&url=...&mode=frontpage&stats&fields=*
 
 For detailed available parameters consult [Analyze API docs](http://www.diffbot.com/products/automatic/classifier/).
 
@@ -143,7 +143,7 @@ When you're done uninit library:
 
 This code will generate following query:
 
-    http://api.diffbot.com/v2/product?token=...&url=...&fields=meta,products(title,brand,upc,media(*))
+    https://api.diffbot.com/v2/product?token=...&url=...&fields=meta,products(title,brand,upc,media(*))
 
 
 For detailed available parameters consult [Product API docs](http://www.diffbot.com/products/automatic/product/).

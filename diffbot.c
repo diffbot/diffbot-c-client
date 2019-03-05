@@ -10,7 +10,7 @@
 #define NUMBER_OF_APIS 5 
 #define NUMBER_OF_FIELDS 19 
 
-const char *apiLink = "http://api.diffbot.com/v2/";
+const char *apiLink = "https://api.diffbot.com/v2/";
 const char *apiNameStrings[] = { "article", "frontpage", "product", "image", "analyze" };
 
 const char *apiFields2[] = { "meta", "querystring", "links", "tags", "*", "url", "resolved_url", "icon", "type", "title", "text", "html", "numPages", "date", "author", "breadcrumb", "nextPage", "albumUrl", "humanLanguage" };
